@@ -25,7 +25,7 @@ const int colind = c00;
 const int layind = l0;
 // Setup for Mode Counter
 int mode=0;
-int start = 0;
+unsigned long start = 0;
 // Setup for array to hold pin order
 int order[20];
 
@@ -76,6 +76,7 @@ void off(int x, int y, int z){
   digitalWrite(colarray[4*y+x], laylev);
   digitalWrite(layarray[z], collev);
 }
+	
 
 
 
@@ -262,20 +263,18 @@ void loop(){
 		}
 	}
 //Mode 8 - Random Walk Snake
-  const int slen=4, del=75;
-  bool ar[4][4][4];
+  const int slen=4, del=100;
   int snake[slen][3]; //[3]=x,y,z
-  int next, dir;
+  int next, dir, prevdir=-1;
   int head=0; //location of head in snake array
+  bool bad;
   for(int i=0; i<slen; ++i){
   	snake[i][0]=0; snake[i][1]=0; snake[i][2]=0;
   }
   while(1){
-  	dir=random(6);
+    bad=0;
+	dir=random(6);
   	next=(head+1)%slen;
-  	++head;
-  	for(int i=0; i<slen; ++i)
-  		off(snake[i][0],snake[i][1],snake[i][2]);
   	snake[next][0]=snake[head][0];
   	snake[next][1]=snake[head][1];
   	snake[next][2]=snake[head][2];
@@ -285,10 +284,31 @@ void loop(){
   	if(dir==3) snake[next][1]=snake[head][1]-1;
   	if(dir==4) snake[next][2]=snake[head][2]+1;
   	if(dir==5) snake[next][2]=snake[head][2]-1;
-  	for(int i=0; i<slen; ++i)
-  		on(snake[i][0],snake[i][1],snake[i][2]);
+	for(int i=0; i<3; ++i){
+	  if(snake[next][i]<0 || snake[next][i]>=4){
+		bad=1;
+		break;
+	  }
+	}
+	for(int i=0; i<slen; ++i){
+	  if(i==next) continue;
+	  if(snake[i][0]==snake[next][0] && snake[i][1]==snake[next][1] && snake[i][2]==snake[next][2]){
+	    bad=1;
+		break;
+	  }
+	}
+	if(bad) continue;
+	start=millis();
+	while(millis()<start+del){
+		for(int i=0; i<slen; ++i){
+			on(snake[i][0],snake[i][1],snake[i][2]);
+			off(snake[i][0],snake[i][1],snake[i][2]);
+		}
+	}
+  	head=next;
   }
 	
 
 }//End of Loop
+
 
